@@ -148,7 +148,7 @@ export function RoleDashboard({
           </section>
 
           <section className="card">
-            <span className="eyebrow">Phase 2 · what is live</span>
+            <span className="eyebrow">Phase 3 · what is live</span>
             <ul className="mt-5 space-y-3 text-sm leading-relaxed text-husk-700">
               <li className="flex gap-3">
                 <span
@@ -156,7 +156,7 @@ export function RoleDashboard({
                   className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-basil-600"
                 />
                 {role === "restaurant"
-                  ? "Publish surplus with quantity, expiry and pickup address"
+                  ? "Publish surplus with quantity, weight, expiry and pickup address"
                   : "Browse and claim surplus published around you"}
               </li>
               <li className="flex gap-3">
@@ -167,6 +167,15 @@ export function RoleDashboard({
                 {role === "restaurant"
                   ? "Cancel a listing while it is still up for grabs"
                   : "See everything you have already claimed"}
+              </li>
+              <li className="flex gap-3">
+                <span
+                  aria-hidden="true"
+                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-basil-600"
+                />
+                {role === "restaurant"
+                  ? "Your impact: kg rescued, plus estimated CO₂ avoided and meals"
+                  : "The platform's impact totals on the public impact page"}
               </li>
             </ul>
 

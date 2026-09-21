@@ -36,6 +36,8 @@ export type ListingRow = {
   claimed_by: string | null;
   claimed_at: string | null;
   created_at: string;
+  /** Phase 3: restaurant-provided weight estimate in kg (nullable — pre-phase-3 rows have none). */
+  estimated_kg?: number | string | null;
 };
 
 /** A listing plus the profile of the kitchen that published it. */

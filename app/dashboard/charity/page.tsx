@@ -156,7 +156,7 @@ export default async function CharityDashboardPage() {
       </section>
 
       <p className="mt-12 text-xs leading-relaxed text-husk-500">
-        Phase 3 adds photos, maps and notifications.{" "}
+        Phase 4 adds photos, maps and notifications.{" "}
         <Link href="/" className="link-underline">
           Back to the homepage
         </Link>

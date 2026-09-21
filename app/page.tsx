@@ -43,6 +43,9 @@ export default function Home() {
             <a className="transition hover:text-basil-800" href="#why">
               Why it matters
             </a>
+            <Link className="transition hover:text-basil-800" href="/impact">
+              Our impact
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2.5">
@@ -93,6 +96,9 @@ export default function Home() {
               </Link>
               <Link href="/signup?role=charity" className="btn btn-accent">
                 Sign up as a charity
+              </Link>
+              <Link href="/impact" className="btn btn-outline">
+                See our impact
               </Link>
             </div>
 
@@ -373,7 +379,7 @@ export default function Home() {
             <div>
               <p className="font-display text-base font-semibold">Food Bridge</p>
               <p className="font-mono text-[10px] tracking-[0.16em] text-husk-600 uppercase">
-                Phase 1 · accounts &amp; profiles
+                Phase 3 · surplus listings &amp; impact
               </p>
             </div>
           </div>
@@ -385,6 +391,9 @@ export default function Home() {
             <a className="transition hover:text-basil-800" href="#who-its-for">
               Who it&apos;s for
             </a>
+            <Link className="transition hover:text-basil-800" href="/impact">
+              Our impact
+            </Link>
             <Link className="transition hover:text-basil-800" href="/login">
               Log in
             </Link>

@@ -4,8 +4,9 @@
  * Every function returns `error` instead of throwing, so a missing migration or
  * an expired session shows a readable notice in the UI rather than a 500.
  */
-import { createClient } from "@/lib/supabase/server";
+import { platformImpactFromRow, restaurantImpactFromRows } from "@/lib/impact";
 import type { ListingRow, ProfileSummary } from "@/lib/listings";
+import { createClient } from "@/lib/supabase/server";
 
 export type ProfileRecord = ProfileSummary & {
   id: string;
@@ -45,6 +46,35 @@ export function readableError(error: { message?: string; code?: string } | null)
   }
 
   return message;
+}
+
+/**
+ * Errors raised by the phase-3 ESG objects: the `estimated_kg` column and the
+ * `get_platform_impact()` function. Both only exist once
+ * `supabase/migrations/003_esg_stats.sql` has been applied, so PostgREST's
+ * "schema cache" / "does not exist" errors are translated into that one
+ * instruction instead of a raw Postgres string.
+ */
+export function esgError(error: { message?: string; code?: string } | null) {
+  if (!error) return null;
+
+  const message = error.message ?? "Something went wrong.";
+  const code = error.code ?? "";
+
+  // 42883 / PGRST202 => function missing, 42703 / PGRST204 => column missing.
+  if (
+    code === "42883" ||
+    code === "PGRST202" ||
+    code === "42703" ||
+    code === "PGRST204" ||
+    /get_platform_impact|estimated_kg/i.test(message)
+  ) {
+    return "The phase-3 impact objects are missing. Run supabase/migrations/003_esg_stats.sql in the Supabase SQL editor.";
+  }
+
+  // Anything else (missing table, expired session, network) keeps the shared
+  // wording from readableError().
+  return readableError(error);
 }
 
 /** A listing as the charity side sees it (with the publishing kitchen). */
@@ -175,4 +205,56 @@ export async function getClaimedListings(charityId: string) {
     listings: normaliseListings(data) as BrowsableListing[],
     error: readableError(error),
   };
+}
+
+/* --------------------------------------------------------------------------- */
+/* Phase 3 — ESG impact                                                        */
+/* --------------------------------------------------------------------------- */
+
+/**
+ * The restaurant's own impact: the summed weight of its listings that a charity
+ * has claimed or collected.
+ *
+ * RLS already allows a kitchen to read its own rows, so this is a plain query —
+ * no function and no elevated privileges are involved. It is deliberately a
+ * *separate* request rather than extra columns on the listing grid: if
+ * migration 003 has not been applied yet, only this panel reports the problem
+ * while the listings themselves keep rendering.
+ */
+export async function getRestaurantImpact(restaurantId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("surplus_listings")
+    .select("estimated_kg")
+    .eq("restaurant_id", restaurantId)
+    .in("status", ["claimed", "picked_up"]);
+
+  return {
+    impact: restaurantImpactFromRows(data),
+    error: esgError(error),
+  };
+}
+
+/**
+ * The platform-wide totals for the public /impact page.
+ *
+ * `anon` can execute get_platform_impact(), which is SECURITY DEFINER, so the
+ * numbers are readable without a session while the underlying rows stay
+ * protected by RLS.
+ */
+export async function getPlatformImpact() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("get_platform_impact");
+
+  if (error) {
+    return {
+      impact: null,
+      error:
+        esgError(error) ?? "The platform totals could not be loaded right now.",
+    };
+  }
+
+  return { impact: platformImpactFromRow(data), error: null };
 }

@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ImpactStats } from "@/components/impact-stats";
 import { ListingCard, ListingNotice } from "@/components/listing-card";
 import { RoleDashboard } from "@/components/role-dashboard";
 import { ROLE_HOME } from "@/lib/listings";
-import { getOwnListings, getSessionProfile } from "@/lib/supabase/queries";
+import {
+  getOwnListings,
+  getRestaurantImpact,
+  getSessionProfile,
+} from "@/lib/supabase/queries";
 
 import { CancelListingButton } from "./cancel-listing-button";
 
@@ -27,8 +32,9 @@ export default async function RestaurantDashboardPage({
     redirect(ROLE_HOME[profile.role] ?? "/dashboard");
   }
 
-  const [{ listings, error }, params] = await Promise.all([
+  const [{ listings, error }, impact, params] = await Promise.all([
     getOwnListings(user.id),
+    getRestaurantImpact(user.id),
     searchParams,
   ]);
 
@@ -129,6 +135,41 @@ export default async function RestaurantDashboardPage({
             </div>
           )}
         </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Phase 3 — the restaurant's own ESG figures                        */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="mt-16 border-t-2 border-dashed border-husk-950/20 pt-12">
+        {impact.error ? (
+          <ListingNotice
+            tone="warning"
+            title="Your impact could not be calculated"
+            body={impact.error}
+          />
+        ) : (
+          <ImpactStats
+            eyebrow="Your impact"
+            heading="What your surplus has already become"
+            intro={`Everything a charity has claimed or collected from you so far — ${impact.impact.rescuedListingCount} ${
+              impact.impact.rescuedListingCount === 1 ? "listing" : "listings"
+            } in total. These are your own figures; the platform-wide numbers live on the public impact page.`}
+            totalKg={impact.impact.totalKg}
+            totalDetail="Summed from the weights you entered when publishing, across your claimed and picked-up listings."
+            footnote={
+              <>
+                Curious how the rest of the network is doing?{" "}
+                <Link
+                  href="/impact"
+                  className="link-underline-light"
+                >
+                  See the platform-wide impact
+                </Link>
+                .
+              </>
+            }
+          />
+        )}
       </section>
     </RoleDashboard>
   );

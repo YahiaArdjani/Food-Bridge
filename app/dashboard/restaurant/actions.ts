@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { readableError } from "@/lib/supabase/queries";
+import { esgError, readableError } from "@/lib/supabase/queries";
 
 export type ListingActionState = {
   error?: string;
@@ -24,6 +24,10 @@ function text(formData: FormData, key: string) {
  * `expiry_at` arrives as a full ISO string (the form converts the
  * `datetime-local` value in the browser), so the absolute instant is stored
  * regardless of the server's timezone.
+ *
+ * `estimated_kg` is required (phase 3): it is what the ESG impact figures are
+ * summed from. The number input rejects anything non-numeric in the browser,
+ * but the parsing below is the check that actually counts.
  */
 export async function createListing(
   _prev: ListingActionState,
@@ -33,10 +37,22 @@ export async function createListing(
   const quantity = text(formData, "quantity");
   const pickupAddress = text(formData, "pickup_address");
   const expiryRaw = text(formData, "expiry_at");
+  const estimatedRaw = text(formData, "estimated_kg");
 
   if (!foodType || !quantity || !expiryRaw) {
     return {
       error: "Food type, quantity and a pickup deadline are all required.",
+    };
+  }
+
+  // Accept "12.5" and "12,5" — the second is what a French or German keyboard
+  // produces on the numeric keypad even with input type="number".
+  const estimatedKg = Number(estimatedRaw.replace(",", "."));
+
+  if (!estimatedRaw || !Number.isFinite(estimatedKg) || estimatedKg <= 0) {
+    return {
+      error:
+        "Estimated weight has to be a number of kilograms greater than zero (for example 12.5).",
     };
   }
 
@@ -63,11 +79,12 @@ export async function createListing(
     quantity,
     expiry_at: expiry.toISOString(),
     pickup_address: pickupAddress || null,
+    estimated_kg: estimatedKg,
     status: "available",
   });
 
   if (error) {
-    return { error: readableError(error) ?? error.message };
+    return { error: esgError(error) ?? error.message };
   }
 
   revalidatePath(DASHBOARD);

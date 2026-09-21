@@ -31,8 +31,8 @@ export function ListingForm({
         Publish surplus
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-husk-600">
-        Keep it short and honest — a charity decides from these four lines
-        whether it can collect tonight.
+        Keep it short and honest — a charity decides from these details whether
+        it can collect tonight.
       </p>
 
       <div className="mt-7 grid gap-5 sm:grid-cols-2">
@@ -83,6 +83,28 @@ export function ListingForm({
             {expiryIso
               ? `Saved as ${new Date(expiryIso).toLocaleString()} (your local time).`
               : "Your local time — we store the exact instant. It has to be in the future."}
+          </p>
+        </div>
+
+        {/* Feeds the phase-3 impact statistics (kg rescued, CO₂, meals). */}
+        <div className="sm:col-span-2">
+          <label className="field-label" htmlFor="estimated_kg">
+            Estimated weight (kg)
+          </label>
+          <input
+            id="estimated_kg"
+            name="estimated_kg"
+            type="number"
+            required
+            min="0.1"
+            step="0.1"
+            inputMode="decimal"
+            className="field-input sm:max-w-[13rem]"
+            placeholder="12.5"
+          />
+          <p className="field-hint">
+            Rough is fine — one decimal, in kilograms. It never affects the
+            pickup, only the impact figures (kg rescued, CO₂ avoided, meals).
           </p>
         </div>
 

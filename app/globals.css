@@ -97,6 +97,12 @@
     @apply text-basil-800 underline decoration-ember-400 decoration-2 underline-offset-4 transition hover:decoration-basil-700;
   }
 
+  /* The same underline link, for the dark basil panels (.link-underline is
+     unreadable on basil-950). */
+  .link-underline-light {
+    @apply text-husk-50 underline decoration-ember-400 decoration-2 underline-offset-4 transition hover:decoration-ember-200;
+  }
+
   /* Listing status / expiry pills — same idiom as .chip, colour-coded. */
   .status-pill {
     @apply inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold whitespace-nowrap;
