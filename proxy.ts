@@ -20,7 +20,7 @@ type ProfileRow = { role: "restaurant" | "charity" | "admin" | null };
  * writes to the response, which is what keeps the auth session alive: the
  * route handlers below cannot write cookies from Server Components.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

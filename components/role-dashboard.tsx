@@ -1,56 +1,51 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+
 import { BridgeMark } from "@/components/bridge-mark";
 import { SignOutButton } from "@/components/sign-out-button";
-import { createClient } from "@/lib/supabase/server";
+import type { ProfileRecord } from "@/lib/supabase/queries";
 
 export type DashboardRole = "restaurant" | "charity";
 
 const COPY: Record<
   DashboardRole,
-  { chip: string; heading: string; intro: string; upcoming: string[] }
+  { chip: string; heading: string; intro: string }
 > = {
   restaurant: {
     chip: "Restaurant / hotel",
     heading: "Your kitchen dashboard",
     intro:
-      "This is where you will publish what the kitchen could not sell. Nothing to publish yet — listings ship in the next phase.",
-    upcoming: [
-      "Publish tonight's surplus with quantity and pickup window",
-      "See which charity claimed each listing",
-      "Keep a log of meals handed over instead of binned",
-    ],
+      "Publish the trays, bread and produce that will not be sold before closing. A charity nearby claims them and collects the same day.",
   },
   charity: {
     chip: "Charity",
     heading: "Your charity dashboard",
     intro:
-      "This is where nearby surplus will appear, ready to claim. Nothing listed yet — listings ship in the next phase.",
-    upcoming: [
-      "Browse surplus published by kitchens in your city",
-      "Claim the pickups you can genuinely collect",
-      "Track what you collected and what it became",
-    ],
+      "See what kitchens around you have going spare right now, claim the pickups you can genuinely collect, and keep track of everything you have claimed.",
   },
 };
 
-export async function RoleDashboard({ role }: { role: DashboardRole }) {
-  const supabase = await createClient();
+/** Deliberately out of scope for this phase. */
+const ROADMAP = ["Photos on listings", "Map + distance sorting", "Notifications"];
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, full_name, organization_name, phone, address, city, created_at")
-    .eq("id", user.id)
-    .maybeSingle();
-
+/**
+ * The dashboard frame: brand header, page heading, whatever the role page
+ * passes as children, then the account panel.
+ *
+ * Presentational on purpose — each route resolves its own session and data.
+ */
+export function RoleDashboard({
+  role,
+  email,
+  profile,
+  profileError,
+  children,
+}: {
+  role: DashboardRole;
+  email: string | undefined;
+  profile: ProfileRecord | null;
+  profileError?: string | null;
+  children: React.ReactNode;
+}) {
   const copy = COPY[role];
   const organisation = profile?.organization_name ?? "your organisation";
 
@@ -66,7 +61,7 @@ export async function RoleDashboard({ role }: { role: DashboardRole }) {
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-husk-600 sm:inline">
-              {user.email}
+              {email}
             </span>
             <SignOutButton />
           </div>
@@ -82,9 +77,12 @@ export async function RoleDashboard({ role }: { role: DashboardRole }) {
           {copy.intro}
         </p>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="mt-10">{children}</div>
+
+        <div className="mt-14 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <section className="card-stamp">
-            <h2 className="font-display text-2xl font-semibold">
+            <span className="eyebrow">Your profile</span>
+            <h2 className="mt-3 font-display text-2xl font-semibold">
               {organisation}
             </h2>
             <p className="mt-1.5 text-sm text-husk-600">
@@ -112,9 +110,7 @@ export async function RoleDashboard({ role }: { role: DashboardRole }) {
               </div>
               <div>
                 <dt className="field-label">Email</dt>
-                <dd className="truncate text-sm text-husk-900">
-                  {user.email}
-                </dd>
+                <dd className="truncate text-sm text-husk-900">{email}</dd>
               </div>
               <div>
                 <dt className="field-label">Address</dt>
@@ -152,26 +148,53 @@ export async function RoleDashboard({ role }: { role: DashboardRole }) {
           </section>
 
           <section className="card">
-            <span className="eyebrow">Next up · phase 2</span>
+            <span className="eyebrow">Phase 2 · what is live</span>
             <ul className="mt-5 space-y-3 text-sm leading-relaxed text-husk-700">
-              {copy.upcoming.map((item) => (
+              <li className="flex gap-3">
+                <span
+                  aria-hidden="true"
+                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-basil-600"
+                />
+                {role === "restaurant"
+                  ? "Publish surplus with quantity, expiry and pickup address"
+                  : "Browse and claim surplus published around you"}
+              </li>
+              <li className="flex gap-3">
+                <span
+                  aria-hidden="true"
+                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-basil-600"
+                />
+                {role === "restaurant"
+                  ? "Cancel a listing while it is still up for grabs"
+                  : "See everything you have already claimed"}
+              </li>
+            </ul>
+
+            <p className="eyebrow mt-7 border-t-2 border-dashed border-husk-950/20 pt-5">
+              Still to come
+            </p>
+            <ul className="mt-3 space-y-2 text-xs leading-relaxed text-husk-600">
+              {ROADMAP.map((item) => (
                 <li key={item} className="flex gap-3">
                   <span
                     aria-hidden="true"
-                    className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ember-500"
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-ember-500"
                   />
                   {item}
                 </li>
               ))}
             </ul>
-            <p className="mt-6 border-t-2 border-dashed border-husk-950/20 pt-5 text-xs leading-relaxed text-husk-500">
-              Kept deliberately empty for now: no listings and no analytics until
-              the next phase.
-            </p>
           </section>
         </div>
 
-        {!profile && (
+        {profileError ? (
+          <p
+            role="status"
+            className="mt-8 rounded-2xl border-2 border-ember-600/40 bg-ember-50 px-4 py-3 text-sm leading-relaxed text-ember-900"
+          >
+            {profileError}
+          </p>
+        ) : !profile ? (
           <p
             role="status"
             className="mt-8 rounded-2xl border-2 border-ember-600/40 bg-ember-50 px-4 py-3 text-sm leading-relaxed text-ember-900"
@@ -183,7 +206,7 @@ export async function RoleDashboard({ role }: { role: DashboardRole }) {
             project — the account itself works, but the profile details stay
             empty until the table and its trigger exist.
           </p>
-        )}
+        ) : null}
       </main>
     </div>
   );

@@ -96,4 +96,29 @@
   .link-underline {
     @apply text-basil-800 underline decoration-ember-400 decoration-2 underline-offset-4 transition hover:decoration-basil-700;
   }
+
+  /* Listing status / expiry pills — same idiom as .chip, colour-coded. */
+  .status-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold whitespace-nowrap;
+  }
+
+  .status-available {
+    @apply border-basil-700/30 bg-basil-100 text-basil-900;
+  }
+
+  .status-claimed {
+    @apply border-ember-700/30 bg-ember-100 text-ember-900;
+  }
+
+  .status-picked-up {
+    @apply border-husk-950/15 bg-husk-100 text-husk-700;
+  }
+
+  .status-cancelled {
+    @apply border-husk-950/12 bg-canvas text-husk-500 line-through;
+  }
+
+  .btn-danger {
+    @apply border-ember-800/30 bg-white text-ember-800 hover:border-ember-800 hover:bg-ember-50;
+  }
 }
